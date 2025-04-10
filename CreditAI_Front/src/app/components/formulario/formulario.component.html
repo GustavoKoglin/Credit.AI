@@ -1,0 +1,187 @@
+<form (ngSubmit)="onSubmit()" class="form-credito">
+  <h1>Credit.AI</h1>
+  <h2 class="form-title">Dados Pessoais</h2>
+  <div class="form-group">
+    <label class="input-label">
+      Nome Completo
+      <input
+        [(ngModel)]="cliente.nome"
+        name="nome"
+        placeholder="Digite seu nome completo"
+        required
+        class="form-input"
+      />
+    </label>
+    <label class="input-label">
+      CPF
+      <input
+        type="text"
+        placeholder="000.000.000-00"
+        mask="000.000.000-00"
+        [(ngModel)]="cliente.cpf"
+        name="cpf"
+        required
+        class="form-input"
+      />
+    </label>
+    <label class="input-label">
+      Renda Mensal
+      <input
+        type="text"
+        placeholder="R$ 0,00"
+        mask="separator.2"
+        thousandSeparator="."
+        decimalMarker=","
+        [(ngModel)]="cliente.rendaMensal"
+        name="rendaMensal"
+        class="form-input"
+      />
+    </label>
+  </div>
+
+  <h2 class="form-title">Score e Restrições</h2>
+  <div class="form-group">
+    <label class="input-label">
+      Score (1-1000)
+      <input
+        type="text"
+        mask="0000"
+        thousandSeparator="."
+        [(ngModel)]="cliente.score"
+        name="score"
+        min="1"
+        max="1000"
+        placeholder="Digite um valor entre 1 e 1000"
+        required
+        class="form-input"
+      />
+    </label>
+
+    <div class="radio-group">
+      <span class="radio-label">Possui restrições?</span>
+      <label class="radio-option">
+        <input
+          type="radio"
+          [(ngModel)]="cliente.possuiRestricoesSPC"
+          [value]="true"
+          name="restricoes"
+        />
+        <span class="radio-custom"></span>
+        Sim
+      </label>
+      <label class="radio-option">
+        <input
+          type="radio"
+          [(ngModel)]="cliente.possuiRestricoesSPC"
+          [value]="false"
+          name="restricoes"
+        />
+        <span class="radio-custom"></span>
+        Não
+      </label>
+    </div>
+  </div>
+
+  <h2 class="form-title">Histórico de Pagamentos</h2>
+  <div class="form-group pagamentos">
+    <div class="radio-group">
+      <span class="radio-label">Os pagamentos estão em dia?</span>
+      <label class="radio-option">
+        <input
+          type="radio"
+          [(ngModel)]="cliente.pagamentosEmDia"
+          [value]="true"
+          name="pagamentosDia"
+          (change)="onPagamentoChange()"
+        />
+        <span class="radio-custom"></span>
+        Sim
+      </label>
+      <label class="radio-option">
+        <input
+          type="radio"
+          [(ngModel)]="cliente.pagamentosEmDia"
+          [value]="false"
+          name="pagamentosDia"
+          (change)="onPagamentoChange()"
+        />
+        <span class="radio-custom"></span>
+        Não
+      </label>
+    </div>
+
+    <div *ngIf="!cliente.pagamentosEmDia">
+      <label class="input-label">
+        Atrasos (30 dias)
+        <input
+          type="number"
+          placeholder="Quantidade de Atrasos"
+          [(ngModel)]="cliente.historicoPagamentos.atrasos30Dias"
+          name="atrasos30"
+          min="0"
+          required
+          class="form-input"
+        />
+      </label>
+      <label class="input-label">
+        Atrasos (60 dias)
+        <input
+          type="number"
+          placeholder="Quantidade de Atrasos"
+          [(ngModel)]="cliente.historicoPagamentos.atrasos60Dias"
+          name="atrasos60"
+          min="0"
+          required
+          class="form-input"
+        />
+      </label>
+      <label class="input-label">
+        Atrasos (90 dias)
+        <input
+          type="number"
+          placeholder="Quantidade de Atrasos"
+          [(ngModel)]="cliente.historicoPagamentos.atrasos90Dias"
+          name="atrasos90"
+          min="0"
+          required
+          class="form-input"
+        />
+      </label>
+    </div>
+  </div>
+
+  <h2 class="form-title">Solicitação</h2>
+  <div class="form-group">
+    <label class="input-label">
+      Tipo de Solicitação
+      <select
+        [(ngModel)]="cliente.solicitacao.tipo"
+        name="tipoSolicitacao"
+        class="form-select"
+      >
+        <option value="liberacao">Selecione uma Opção</option>
+        <option value="liberacao">Liberação de Crédito</option>
+        <option value="aumento">Aumento de Limite</option>
+      </select>
+    </label>
+
+    <div *ngIf="cliente.solicitacao.tipo === 'aumento'">
+      <label class="input-label">
+        Valor Solicitado
+        <input
+          type="text"
+          placeholder="R$ 0,00"
+          mask="separator.2"
+          thousandSeparator="."
+          decimalMarker=","
+          [(ngModel)]="cliente.solicitacao.valorSolicitado"
+          name="valorSolicitado"
+          min="0"
+          class="form-input"
+        />
+      </label>
+    </div>
+  </div>
+
+  <button type="submit" class="submit-button">Analisar Crédito</button>
+</form>
