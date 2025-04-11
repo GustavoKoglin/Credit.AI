@@ -1,9 +1,11 @@
-import { Component, EventEmitter, Output } from '@angular/core';
+import { Component } from '@angular/core';
 import { Cliente } from '../../models/cliente.model';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
-import { NgxMaskDirective, NgxMaskPipe } from 'ngx-mask';
+import { NgxMaskDirective } from 'ngx-mask';
+import { ApiService } from '../../services/api.service';
+import { ResultadoAnalise } from '../../models/cliente.model';
 
 @Component({
   selector: 'app-formulario',
@@ -18,10 +20,13 @@ import { NgxMaskDirective, NgxMaskPipe } from 'ngx-mask';
   styleUrl: './formulario.component.scss'
 })
 export class FormularioComponent {
+  loading = false;
+  errorMessage = '';
 
-  constructor(private router: Router) {}
-
-  @Output() analisar = new EventEmitter<Cliente>();
+  constructor(
+    private router: Router,
+    private apiService: ApiService
+  ) {}
 
   cliente: Cliente & { pagamentosEmDia: boolean } = {
     nome: '',
@@ -38,6 +43,7 @@ export class FormularioComponent {
     },
     solicitacao: {
       tipo: 'liberacao',
+      valorSolicitado: 0
     }
   };
 
@@ -48,13 +54,15 @@ export class FormularioComponent {
       this.cliente.historicoPagamentos.atrasos90Dias = 0;
       this.cliente.historicoPagamentos.percentualEmDia = 1.0;
     } else {
-      this.cliente.historicoPagamentos.percentualEmDia = 0.5; // ou algum valor default
+      this.cliente.historicoPagamentos.percentualEmDia = 0.5;
     }
   }
 
   onSubmit() {
-    // Remover campo auxiliar antes de emitir
-    const clienteCopia: Cliente = {
+    this.loading = true;
+    this.errorMessage = '';
+
+    const clienteParaEnviar: Cliente = {
       nome: this.cliente.nome,
       cpf: this.cliente.cpf,
       score: this.cliente.score,
@@ -72,6 +80,28 @@ export class FormularioComponent {
       }
     };
 
-    this.analisar.emit(clienteCopia);
+    // Primeiro cadastra o cliente
+    this.apiService.adicionarCliente(clienteParaEnviar).subscribe({
+      next: () => {
+        // Depois faz a análise de crédito
+        this.apiService.analisarCredito(this.cliente.cpf).subscribe({
+          next: (resultado: ResultadoAnalise) => {
+            this.loading = false;
+            // Navega para o resultado com os dados
+            this.router.navigate(['/resultado'], { 
+              state: { resultado } 
+            });
+          },
+          error: (err) => {
+            this.loading = false;
+            this.errorMessage = 'Erro ao analisar crédito: ' + (err.error?.message || err.message);
+          }
+        });
+      },
+      error: (err) => {
+        this.loading = false;
+        this.errorMessage = 'Erro ao cadastrar cliente: ' + (err.error?.message || err.message);
+      }
+    });
   }
 }
