@@ -4,6 +4,7 @@ Módulo principal da API Credit.AI - Sistema de análise de crédito
 """
 
 # Importações necessárias
+from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException  # Framework para criar a API
 from fastapi.middleware.cors import CORSMiddleware  # Para lidar com CORS
 from pydantic import BaseModel, Field, validator  # Para validação de dados
@@ -14,6 +15,9 @@ import numpy as np  # Para cálculos numéricos
 from sklearn.ensemble import RandomForestClassifier  # Algoritmo de ML
 from pathlib import Path  # Para manipulação de caminhos de arquivos
 from typing import Dict, Optional
+import os
+
+load_dotenv()  # Carrega as variáveis do arquivo .env
 
 # Inicializa a aplicação FastAPI
 app = FastAPI(
@@ -69,14 +73,14 @@ class AnaliseRequest(BaseModel):
 # ==============================================
 
 def get_db_connection():
-    """Estabelece conexão com o banco de dados MySQL"""
+    """Estabelece conexão com o banco de dados MySQL usando variáveis do .env"""
     try:
         connection = mysql.connector.connect(
-            host='localhost',
-            database='creditaidb',
-            user='root',
-            password='Gbk@2027',
-            port='3306'
+            host=os.getenv("DB_HOST"),         
+            database=os.getenv("DB_NAME"),     
+            user=os.getenv("DB_USER"),         
+            password=os.getenv("DB_PASSWORD"), 
+            port=os.getenv("DB_PORT")          
         )
         return connection
     except Error as e:
@@ -293,5 +297,6 @@ def analisar_credito(request: AnaliseRequest):
 
 # Ponto de entrada da aplicação
 if __name__ == "__main__":
+    conn = get_db_connection()
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
