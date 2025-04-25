@@ -1,10 +1,11 @@
+# carregar_dados.py
 import mysql.connector
 import json
 from pathlib import Path
 from collections import Counter
 
 def carregar_clientes():
-    try:
+    try: 
         # 1. Conecta ao banco
         conn = mysql.connector.connect(
             host='localhost',
@@ -35,15 +36,13 @@ def carregar_clientes():
                 cursor.execute("""
                     INSERT INTO clientes (
                         cpf, nome, score, possui_restricoes, renda_mensal,
-                        percentual_pagamentos_em_dia, atrasos_30_dias,
-                        atrasos_60_dias, atrasos_90_dias
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        atrasos_30_dias, atrasos_60_dias, atrasos_90_dias
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                     ON DUPLICATE KEY UPDATE
                         nome = VALUES(nome),
                         score = VALUES(score),
                         possui_restricoes = VALUES(possui_restricoes),
                         renda_mensal = VALUES(renda_mensal),
-                        percentual_pagamentos_em_dia = VALUES(percentual_pagamentos_em_dia),
                         atrasos_30_dias = VALUES(atrasos_30_dias),
                         atrasos_60_dias = VALUES(atrasos_60_dias),
                         atrasos_90_dias = VALUES(atrasos_90_dias)
@@ -53,7 +52,6 @@ def carregar_clientes():
                     cliente['score'],
                     cliente['possuiRestricoes'],
                     cliente['rendaMensal'],
-                    cliente['historicoPagamentos']['percentualEmDia'],
                     cliente['historicoPagamentos']['atrasos30Dias'],
                     cliente['historicoPagamentos']['atrasos60Dias'],
                     cliente['historicoPagamentos']['atrasos90Dias']

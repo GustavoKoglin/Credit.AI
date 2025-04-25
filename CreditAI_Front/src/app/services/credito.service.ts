@@ -5,25 +5,13 @@ import { Cliente, ResultadoAnalise } from '../models/cliente.model';
   providedIn: 'root',
 })
 export class CreditoService {
+  private readonly SCORE_MINIMO = 400;
+  private readonly PORCENTAGEM_RENDA = 0.5;
+
   analisar(cliente: Cliente): ResultadoAnalise {
-    const motivos: string[] = [];
-    const sugestoes: string[] = [];
-
-    // Regras de negócio (exemplo)
-    if (cliente.score < 400) {
-      motivos.push('Score muito baixo (mínimo: 400)');
-      sugestoes.push('Melhore seu score pagando contas em dia');
-    }
-    if (cliente.possuiRestricoesSPC) {
-      motivos.push('Restrições no SPC/Serasa');
-      sugestoes.push('Regularize seu nome para liberação');
-    }
-    if (cliente.historicoPagamentos.percentualEmDia < 0.7) {
-      motivos.push('Histórico de pagamentos insuficiente');
-      sugestoes.push('Aumente para 70% de pagamentos em dia');
-    }
-
+    const { motivos, sugestoes } = this.avaliarCriticos(cliente);
     const aprovado = motivos.length === 0;
+
     return {
       aprovado,
       limiteAprovado: aprovado ? this.calcularLimite(cliente) : undefined,
@@ -32,10 +20,35 @@ export class CreditoService {
     };
   }
 
+  private avaliarCriticos(cliente: Cliente): { motivos: string[]; sugestoes: string[] } {
+    const motivos: string[] = [];
+    const sugestoes: string[] = [];
+
+    // Avaliação de score
+    if (cliente.score < this.SCORE_MINIMO) {
+      motivos.push(`Score muito baixo (mínimo: ${this.SCORE_MINIMO})`);
+      sugestoes.push('Melhore seu score pagando contas em dia');
+    }
+
+    // Avaliação de restrições
+    if (cliente.possuiRestricoesSPC) {
+      motivos.push('Restrições no SPC/Serasa');
+      sugestoes.push('Regularize seu nome para liberação');
+    }
+
+    // Avaliação de histórico de pagamentos
+    const { atrasos30Dias, atrasos60Dias, atrasos90Dias } = cliente.historicoPagamentos;
+    if (atrasos30Dias > 2 || atrasos60Dias > 0 || atrasos90Dias > 0) {
+      motivos.push('Histórico de pagamentos com atrasos significativos');
+      sugestoes.push('Mantenha seus pagamentos em dia para melhorar sua análise');
+    }
+
+    return { motivos, sugestoes };
+  }
+
   private calcularLimite(cliente: Cliente): number {
-    // Lógica personalizada (exemplo)
-    const base = cliente.rendaMensal * 0.5;
-    const multiplicador = cliente.score / 1000;
+    const base = cliente.rendaMensal * this.PORCENTAGEM_RENDA;
+    const multiplicador = cliente.score / 1000; // Normaliza score para 0-1
     return Math.round(base * multiplicador);
   }
 }

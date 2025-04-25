@@ -17,16 +17,15 @@ def load_data():
     )
     
     query = """
-    SELECT 
-        score, 
-        possui_restricoes, 
-        percentual_pagamentos_em_dia,
-        atrasos_30_dias,
-        atrasos_60_dias,
-        atrasos_90_dias,
-        renda_mensal,
-        CASE WHEN score >= 400 AND possui_restricoes = 0 AND percentual_pagamentos_em_dia >= 0.7 THEN 1 ELSE 0 END as aprovado
-    FROM clientes
+        SELECT 
+            score, 
+            possui_restricoes, 
+            atrasos_30_dias,
+            atrasos_60_dias,
+            atrasos_90_dias,
+            renda_mensal,
+            CASE WHEN score >= 400 AND possui_restricoes = 0 THEN 1 ELSE 0 END as aprovado
+        FROM clientes
     """
     
     df = pd.read_sql(query, connection)

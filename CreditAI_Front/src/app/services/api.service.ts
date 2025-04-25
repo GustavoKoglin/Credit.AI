@@ -14,27 +14,41 @@ export class ApiService {
 
   constructor(private http: HttpClient) { }
 
-  adicionarCliente(cliente: Cliente): Observable<any> {
-    // Ajusta os nomes dos campos para corresponder ao backend
-    const clienteParaBackend = {
-      cpf: cliente.cpf,
+  
+
+  adicionarCliente(cliente: any): Observable<any> {
+    // Validação dos dados antes de enviar
+    if (!cliente.historicoPagamentos) {
+      throw new Error('Histórico de pagamentos é obrigatório');
+    }
+  
+    // Prepara o objeto no formato que o backend espera
+    const dadosParaBackend = {
+      cpf: cliente.cpf.replace(/\D/g, ''), // Remove formatação do CPF
       nome: cliente.nome,
-      score: cliente.score,
-      possui_restricoes: cliente.possuiRestricoesSPC,
-      renda_mensal: cliente.rendaMensal,
+      score: Number(cliente.score), // Garante que é número
+      possui_restricoes: Boolean(cliente.possuiRestricoesSPC), // Converte para boolean
+      renda_mensal: Number(cliente.rendaMensal), // Garante que é número
       historico_pagamentos: {
-        percentual_em_dia: cliente.historicoPagamentos.percentualEmDia,
-        atrasos_30_dias: cliente.historicoPagamentos.atrasos30Dias,
-        atrasos_60_dias: cliente.historicoPagamentos.atrasos60Dias,
-        atrasos_90_dias: cliente.historicoPagamentos.atrasos90Dias
+        atrasos_30_dias: Number(cliente.historicoPagamentos.atrasos30Dias) || 0,
+        atrasos_60_dias: Number(cliente.historicoPagamentos.atrasos60Dias) || 0,
+        atrasos_90_dias: Number(cliente.historicoPagamentos.atrasos90Dias) || 0
       }
     };
-    
-    return this.http.post(`${this.apiUrl}/clientes`, clienteParaBackend);
+  
+    console.log('Dados sendo enviados:', JSON.stringify(dadosParaBackend, null, 2));
+    return this.http.post(`${this.apiUrl}/clientes`, dadosParaBackend, {
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+
+  // Nova função para buscar cliente por CPF
+  getClientePorCpf(cpf: string): Observable<Cliente> {
+    return this.http.get<Cliente>(`${this.apiUrl}/clientes/${cpf}`);
   }
 
   analisarCredito(cpf: string): Observable<ResultadoAnalise> {
-    return this.http.post<ResultadoAnalise>(`${this.apiUrl}/analisar`, { cpf });
+    return this.http.post<ResultadoAnalise>(`${this.apiUrl}analise-credito`, { cpf });
   }
 
   listarClientes(): Observable<any> {

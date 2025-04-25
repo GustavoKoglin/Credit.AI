@@ -39,3 +39,6 @@ export class ResultadoComponent {
     this.router.navigate(['/analise-credito']);
   }
 }
+
+
+

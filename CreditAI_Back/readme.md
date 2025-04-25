@@ -77,7 +77,7 @@ Acesse a documentação interativa em: [http://localhost:8000/docs](http://local
 }
 ```
 
-**POST /analisar** - Analisa crédito
+**POST analise-credito** - Analisa crédito
 ```json
 {"cpf": "123.456.789-09"}
 ```

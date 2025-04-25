@@ -26,7 +26,7 @@ export class FormularioComponent {
   constructor(
     private router: Router,
     private apiService: ApiService
-  ) {}
+  ) { }
 
   cliente: Cliente & { pagamentosEmDia: boolean } = {
     nome: '',
@@ -36,7 +36,6 @@ export class FormularioComponent {
     rendaMensal: 0,
     pagamentosEmDia: false,
     historicoPagamentos: {
-      percentualEmDia: 1.0,
       atrasos30Dias: 0,
       atrasos60Dias: 0,
       atrasos90Dias: 0
@@ -49,12 +48,14 @@ export class FormularioComponent {
 
   onPagamentoChange() {
     if (this.cliente.pagamentosEmDia) {
+      this.cliente.historicoPagamentos = this.cliente.historicoPagamentos || {
+        atrasos30Dias: 0,
+        atrasos60Dias: 0,
+        atrasos90Dias: 0
+      };
       this.cliente.historicoPagamentos.atrasos30Dias = 0;
       this.cliente.historicoPagamentos.atrasos60Dias = 0;
       this.cliente.historicoPagamentos.atrasos90Dias = 0;
-      this.cliente.historicoPagamentos.percentualEmDia = 1.0;
-    } else {
-      this.cliente.historicoPagamentos.percentualEmDia = 0.5;
     }
   }
 
@@ -62,21 +63,25 @@ export class FormularioComponent {
     this.loading = true;
     this.errorMessage = '';
 
-    const clienteParaEnviar: Cliente = {
+    // Garante que o histórico de pagamentos existe
+    if (!this.cliente.historicoPagamentos) {
+      this.cliente.historicoPagamentos = {
+        atrasos30Dias: 0,
+        atrasos60Dias: 0,
+        atrasos90Dias: 0
+      };
+    }
+
+    const clienteParaEnviar = {
       nome: this.cliente.nome,
-      cpf: this.cliente.cpf,
-      score: this.cliente.score,
-      possuiRestricoesSPC: this.cliente.possuiRestricoesSPC,
-      rendaMensal: this.cliente.rendaMensal,
+      cpf: this.cliente.cpf.replace(/\D/g, ''),
+      score: Number(this.cliente.score),
+      possuiRestricoesSPC: Boolean(this.cliente.possuiRestricoesSPC),
+      rendaMensal: Number(this.cliente.rendaMensal),
       historicoPagamentos: {
-        percentualEmDia: this.cliente.historicoPagamentos.percentualEmDia,
-        atrasos30Dias: this.cliente.historicoPagamentos.atrasos30Dias,
-        atrasos60Dias: this.cliente.historicoPagamentos.atrasos60Dias,
-        atrasos90Dias: this.cliente.historicoPagamentos.atrasos90Dias
-      },
-      solicitacao: {
-        tipo: this.cliente.solicitacao.tipo,
-        valorSolicitado: this.cliente.solicitacao.valorSolicitado
+        atrasos30Dias: Number(this.cliente.historicoPagamentos.atrasos30Dias) || 0,
+        atrasos60Dias: Number(this.cliente.historicoPagamentos.atrasos60Dias) || 0,
+        atrasos90Dias: Number(this.cliente.historicoPagamentos.atrasos90Dias) || 0
       }
     };
 
@@ -84,12 +89,11 @@ export class FormularioComponent {
     this.apiService.adicionarCliente(clienteParaEnviar).subscribe({
       next: () => {
         // Depois faz a análise de crédito
-        this.apiService.analisarCredito(this.cliente.cpf).subscribe({
+        this.apiService.analisarCredito(this.cliente.cpf.replace(/\D/g, '')).subscribe({
           next: (resultado: ResultadoAnalise) => {
             this.loading = false;
-            // Navega para o resultado com os dados
-            this.router.navigate(['/resultado'], { 
-              state: { resultado } 
+            this.router.navigate(['/resultado'], {
+              state: { resultado }
             });
           },
           error: (err) => {
